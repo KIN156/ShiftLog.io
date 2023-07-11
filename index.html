@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clock In/Out</title>
+  <style>
+    .clock-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid black;
+    }
+
+    .delete-btn {
+      background-color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <h1>Clock In/Out</h1>
+  <button class="clock-btn" id="clock-in-btn">Clock In</button>
+  <button class="clock-btn" id="clock-out-btn">Clock Out</button>
+
+  <table id="time-table">
+    <tr>
+      <th>Date</th>
+      <th>Clock In Time</th>
+      <th>Clock Out Time</th>
+      <th>Total Hours</th>
+      <th>Total Hours - 30min</th>
+      <th>Delete</th>
+    </tr>
+  </table>
+
+  <script>
+    var clockInTime = null;
+    var records = JSON.parse(localStorage.getItem('clockRecords')) || [];
+
+    // Function to update the records in localStorage
+    function updateRecords() {
+      localStorage.setItem('clockRecords', JSON.stringify(records));
+    }
+
+    // Function to display the records in the table
+    function displayRecords() {
+      var table = document.getElementById("time-table");
+      table.innerHTML = `
+        <tr>
+          <th>Date</th>
+          <th>Clock In Time</th>
+          <th>Clock Out Time</th>
+          <th>Total Hours</th>
+          <th>Total Hours - 30min</th>
+          <th>Delete</th>
+        </tr>
+      `;
+
+      for (var i = 0; i < records.length; i++) {
+        var record = records[i];
+        var newRow = table.insertRow(-1);
+
+        for (var j = 0; j < 5; j++) {
+          var cell = newRow.insertCell(j);
+          cell.innerHTML = record[j];
+        }
+
+        var deleteCell = newRow.insertCell(5);
+        var deleteBtn = document.createElement("button");
+        deleteBtn.innerHTML = "Delete";
+        deleteBtn.className = "delete-btn";
+        deleteBtn.dataset.index = i;
+        deleteBtn.addEventListener("click", deleteRecord);
+        deleteCell.appendChild(deleteBtn);
+      }
+    }
+
+    // Function to handle the clock-in button click
+    function clockIn() {
+      var currentTime = new Date().toLocaleTimeString();
+      var currentDate = new Date().toLocaleDateString();
+      var clockInRecord = [currentDate, currentTime, "", "", ""];
+      records.push(clockInRecord);
+      updateRecords();
+      displayRecords();
+      clockInTime = new Date();
+    }
+
+    // Function to handle the clock-out button click
+    function clockOut() {
+      if (clockInTime === null) {
+        alert("Please clock in first.");
+        return;
+      }
+
+      var currentTime = new Date().toLocaleTimeString();
+      var clockOutTime = new Date();
+      var clockInTimeString = clockInTime.toLocaleTimeString();
+      var timeDiff = Math.abs(clockOutTime - clockInTime);
+      var totalHours = Math.floor(timeDiff / 1000 / 60 / 60);
+      var totalMinutes = Math.floor(timeDiff / 1000 / 60) % 60;
+      var totalSeconds = Math.floor(timeDiff / 1000) % 60;
+      var totalHoursFormatted = totalHours.toString().padStart(2, '0');
+      var totalMinutesFormatted = totalMinutes.toString().padStart(2, '0');
+      var totalSecondsFormatted = totalSeconds.toString().padStart(2, '0');
+      var totalHoursString = totalHoursFormatted + ":" + totalMinutesFormatted + ":" + totalSecondsFormatted;
+      var totalMinus30 = totalHours * 60 + totalMinutes - 30;
+      var totalMinus30Hours = Math.floor(totalMinus30 / 60);
+      var totalMinus30Minutes = totalMinus30 % 60;
+      var totalMinus30HoursFormatted = totalMinus30Hours.toString().padStart(2, '0');
+      var totalMinus30MinutesFormatted = totalMinus30Minutes.toString().padStart(2, '0');
+      var totalMinus30String = totalMinus30HoursFormatted + ":" + totalMinus30MinutesFormatted;
+      var clockInRecord = records[records.length - 1];
+      clockInRecord[2] = currentTime;
+      clockInRecord[3] = totalHoursString;
+      clockInRecord[4] = totalMinus30String;
+      updateRecords();
+      displayRecords();
+      clockInTime = null;
+    }
+
+    // Function to handle the delete button click
+    function deleteRecord(event) {
+      var index = event.target.dataset.index;
+      records.splice(index, 1);
+      updateRecords();
+      displayRecords();
+    }
+
+    // Initial display of records
+    displayRecords();
+
+    // Attach event listeners to the buttons
+    document.getElementById("clock-in-btn").addEventListener("click", clockIn);
+    document.getElementById("clock-out-btn").addEventListener("click", clockOut);
+  </script>
+</body>
+</html>
